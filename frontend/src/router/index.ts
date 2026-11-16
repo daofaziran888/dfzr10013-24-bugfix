@@ -14,6 +14,7 @@ const Drill = () => import('@/views/drill/index.vue')
 const Report = () => import('@/views/report/index.vue')
 const Compare = () => import('@/views/compare/index.vue')
 const Datasource = () => import('@/views/datasource/index.vue')
+const BusinessDetail = () => import('@/views/business-detail/index.vue')
 const Cache = () => import('@/views/cache/index.vue')
 const Template = () => import('@/views/template/index.vue')
 const Refresh = () => import('@/views/refresh/index.vue')
@@ -35,6 +36,7 @@ const router = createRouter({
     { path: '/report', name: 'report', component: Report },
     { path: '/compare', name: 'compare', component: Compare },
     { path: '/datasource', name: 'datasource', component: Datasource },
+    { path: '/business-detail', name: 'business-detail', component: BusinessDetail },
     { path: '/cache', name: 'cache', component: Cache },
     { path: '/template', name: 'template', component: Template },
     { path: '/refresh', name: 'refresh', component: Refresh },

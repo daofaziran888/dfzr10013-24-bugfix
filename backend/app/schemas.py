@@ -28,6 +28,38 @@ class EntryPayload(BaseModel):
     remark: str | None = None
 
 
+class DetailFilePayload(BaseModel):
+    """经营明细文件导入：文件内容随请求体提交（本地文件由前端读取后上传）。"""
+
+    filename: str
+    source_name: str
+    content: str
+    datasource_id: int | None = None
+
+
+class ConflictResolvePayload(BaseModel):
+    """冲突归并组的人工裁决：必须指定入选候选并写明依据。"""
+
+    candidate_id: int
+    reason: str
+    operator: str = "分析员"
+
+
+class DatasetPublishPayload(BaseModel):
+    """发布经营明细数据集时的备注。"""
+
+    remark: str | None = None
+
+
+class ReportSnapshotPayload(BaseModel):
+    """经营分析报告取数：指定数据版本与周期/币种筛选，留空取最新版本全量。"""
+
+    report_id: int
+    version: str | None = None
+    periods: list[str] = Field(default_factory=list)
+    currencies: list[str] = Field(default_factory=list)
+
+
 
 class KpiEntry(BaseModel):
     """经营指标明细结构。"""

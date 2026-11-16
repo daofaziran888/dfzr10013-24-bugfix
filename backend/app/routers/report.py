@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas import ActionResult, EntryPayload, PageResult
 from app.services.report import ReportService
+from app.services.report_snapshot import ReportSnapshotService
 
 router = APIRouter(prefix="/api/report", tags=["经营分析报告"])
 
@@ -63,3 +64,15 @@ def export_entries() -> dict[str, Any]:
     """导出经营分析报告清单：返回当前过滤条件下的全量数据。"""
     items, total = service.list_entries(page=1, size=10000)
     return {"module": "report", "total": total, "items": items}
+
+
+@router.get("/{entry_id}/snapshots")
+def report_snapshots(entry_id: int) -> dict[str, Any]:
+    """跨模块取数：返回该报告基于已发布经营明细数据集生成的全部取数快照。
+
+    快照不可变，后续导入或冲突处理不会改写这里的历史依据。
+    """
+    if service.get_entry(entry_id) is None:
+        raise HTTPException(status_code=404, detail=f"分析报告 {entry_id} 不存在或已归档")
+    items = ReportSnapshotService().list_snapshots(entry_id)
+    return {"items": items, "total": len(items)}

@@ -47,6 +47,7 @@
             >
               {{ action }}
             </button>
+            <button class="link" type="button" @click="viewSnapshots(row)">取数依据</button>
           </td>
         </tr>
         <tr v-if="!rows.length">
@@ -54,6 +55,38 @@
         </tr>
       </tbody>
     </table>
+
+    <div v-if="snapshotPanel.report" class="snapshot-panel">
+      <div class="snapshot-head">
+        <strong>{{ snapshotPanel.report['报告编号'] }} 的取数依据（来自已发布经营明细数据集，不可变）</strong>
+        <button class="btn ghost" type="button" @click="snapshotPanel.report = null">关闭</button>
+      </div>
+      <table v-if="snapshotPanel.items.length" class="data-table">
+        <thead>
+          <tr><th>快照</th><th>数据版本</th><th>明细数</th><th>币种合计</th><th>未计冲突组</th><th>来源范围</th><th>生成时间</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="snapshot in snapshotPanel.items" :key="snapshot.snapshot_id">
+            <td>{{ snapshot.snapshot_id }}</td>
+            <td>{{ snapshot.dataset_version }}</td>
+            <td>{{ snapshot.record_count }}</td>
+            <td>
+              <span v-for="total in snapshot.total_by_currency" :key="total.currency">
+                {{ total.currency }} {{ total.amount }}；
+              </span>
+            </td>
+            <td>{{ snapshot.excluded_conflict_count }}</td>
+            <td>
+              <span v-for="scope in snapshot.source_scope" :key="scope.file_id">
+                {{ scope.source_name }}/{{ scope.filename }}；
+              </span>
+            </td>
+            <td>{{ snapshot.created_at }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else class="empty-state">该报告还没有取数快照，请先到「多源经营明细导入」发布数据集并生成快照</p>
+    </div>
 
     <footer class="page-foot">
       <span>共 {{ total }} 条经营分析报告记录</span>
@@ -63,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 
 import { request } from '@/api/client'
 
@@ -80,6 +113,24 @@ const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+const snapshotPanel = reactive<{ report: Row | null; items: any[] }>({ report: null, items: [] })
+
+async function viewSnapshots(row: Row) {
+  errorMessage.value = ''
+  try {
+    const response = await request(`${ENDPOINT}/${row.id}/snapshots`)
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}))
+      throw new Error(payload.detail ?? '取数依据读取失败')
+    }
+    const payload = await response.json()
+    snapshotPanel.report = row
+    snapshotPanel.items = payload.items ?? []
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '取数依据读取失败'
+  }
+}
 
 function resetFilters() {
   filters.value = {}
@@ -128,3 +179,20 @@ async function reload() {
 
 onMounted(reload)
 </script>
+
+<style scoped>
+.snapshot-panel {
+  margin-top: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.snapshot-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+</style>
